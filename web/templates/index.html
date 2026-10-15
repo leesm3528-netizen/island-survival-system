@@ -1,0 +1,123 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>무인도 시스템</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+  <!-- 배경: 해안가 일러스트를 어둡게 깔고, 그 위에 시스템 창을 띄운다 -->
+  <div class="backdrop"></div>
+
+  <main class="system" id="system">
+    <header class="sys-head">
+      <span class="diamond">◆</span><h1>SYSTEM</h1><span class="diamond">◆</span>
+    </header>
+
+    <!-- 상태창 -->
+    <section class="status">
+      <div class="lv" id="lv">Lv.1</div>
+      <div class="exp">
+        <div class="exp-label">EXP</div>
+        <div class="exp-bar"><div class="exp-fill" id="expFill"></div></div>
+        <div class="exp-text" id="expText">0 / 100</div>
+      </div>
+      <div class="meta" id="meta"></div>
+    </section>
+    <div class="bag" id="bag"></div>
+    <div class="notice" id="notice"></div>
+
+    <!-- 퀘스트 -->
+    <section class="quest">
+      <div class="progress" id="progress"></div>
+      <h2 class="q-title" id="qTitle"></h2>
+      <p class="q-text" id="qText"></p>
+      <form class="answer-row" id="answerForm">
+        <input id="answer" autocomplete="off" placeholder="답을 입력하십시오" aria-label="답 입력">
+        <button id="submit" class="btn primary" type="submit">확 인</button>
+      </form>
+      <button id="flare" class="btn ghost" type="button">신호탄 쏘기 ×0</button>
+      <div class="result" id="result"></div>
+      <div class="future" id="future" hidden>
+        <img src="static/img/future_me.jpg" alt="미래의 나">
+        <p><b>미래의 나</b><span id="hint"></span></p>
+      </div>
+    </section>
+
+    <footer class="foot">F2 · 돌발 미션 시연</footer>
+  </main>
+
+  <!-- 시작 화면 -->
+  <div class="overlay" id="intro">
+    <div class="intro-card">
+      <img class="intro-face" src="static/img/future_me.jpg" alt="미래의 나">
+      <div class="intro-text">
+        <div class="tag">[ SYSTEM MESSAGE ]</div>
+        <p id="introLine"></p>
+        <button class="btn primary" id="startBtn" hidden>시스템 접속</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 레벨업 보급 연출 -->
+  <div class="overlay" id="levelup" hidden>
+    <div class="scene lu-scene">
+      <div class="lu-title">LEVEL UP</div>
+      <div class="lu-sub" id="luSub"></div>
+      <div class="heli" id="heli">
+        <svg viewBox="0 0 200 90" aria-hidden="true">
+          <rect class="rotor" x="15" y="4" width="160" height="5" rx="2" fill="#d6ecff"/>
+          <rect x="88" y="8" width="7" height="14" fill="#7d8ea3"/>
+          <path d="M128 42 L192 32 L192 42 L128 54 Z" fill="#7d8ea3"/>
+          <rect class="tail-rotor" x="186" y="20" width="4" height="34" fill="#d6ecff"/>
+          <ellipse cx="90" cy="46" rx="48" ry="24" fill="#4a5a6a" stroke="#3fa9ff" stroke-width="3"/>
+          <path d="M46 42 Q52 26 78 26 L78 50 L44 50 Z" fill="#9ad1ff"/>
+          <text x="84" y="52" font-size="11" font-weight="700" fill="#ffd166" font-family="Orbitron, sans-serif">RESCUE</text>
+          <rect x="62" y="68" width="4" height="12" fill="#7d8ea3"/>
+          <rect x="112" y="68" width="4" height="12" fill="#7d8ea3"/>
+          <rect x="44" y="79" width="94" height="5" rx="2" fill="#7d8ea3"/>
+        </svg>
+      </div>
+      <div class="crate" id="crate"><div class="chute"></div><div class="lines"></div><div class="box"></div></div>
+      <div class="reward" id="luReward"></div>
+    </div>
+  </div>
+
+  <!-- 돌발 미션: 표류자 -->
+  <div class="overlay" id="event" hidden>
+    <div class="ev-card">
+      <div class="ev-head">⚠ 돌발 미션 : 해안가에 표류자 발견</div>
+      <div class="scene ev-scene">
+        <div class="drifter" id="drifter"><img id="drifterImg" alt=""></div>
+        <div class="waves"></div>
+        <div class="ev-banner" id="evBanner">해안가에 누군가 떠밀려 왔다!</div>
+      </div>
+      <div class="ev-body" id="evBody" hidden>
+        <img class="portrait" id="portrait" alt="">
+        <div class="ev-info">
+          <h3 id="evName"></h3>
+          <p class="story" id="evStory"></p>
+          <ul class="clues" id="clues"></ul>
+          <button class="btn ghost small" id="lookCloser" type="button">◎ 더 살펴보기</button>
+        </div>
+      </div>
+      <div class="ev-tip" id="evTip" hidden>
+        <img src="static/img/future_me.jpg" alt="">
+        <span>구한다고 다 도움이 되는 건 아니야. 단서로 판단해.</span>
+      </div>
+      <div class="choices" id="choices" hidden>
+        <button class="btn choice" data-choice="trust" type="button">함께 지낸다<small>믿는다</small></button>
+        <button class="btn choice" data-choice="guard" type="button">구조하되<small>경계한다</small></button>
+        <button class="btn choice" data-choice="watch" type="button">멀리서<small>지켜본다</small></button>
+      </div>
+      <div class="ev-result" id="evResult" hidden></div>
+    </div>
+  </div>
+
+  <script src="static/game.js"></script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+{
+ "rules": {
+  "max_tries": 2,
+  "exp_per_level": 100,
+  "event_chance": 0.4,
+  "exp_first_try": 40,
+  "exp_with_hint": 20,
+  "supplies": [
+   "생수 2병",
+   "통조림",
+   "구급상자",
+   "신호탄",
+   "라이터"
+  ],
+  "foods": [
+   "통조림",
+   "말린 생선",
+   "생수 2병"
+  ]
+ },
+ "quests": [
+  {
+   "id": "q1",
+   "title": "일일 퀘스트: 생존 기초 ① 물",
+   "question": "바닷물을 그대로 마시면 안 되는 이유는\n물속에 무엇이 너무 많기 때문인가? (한 단어)",
+   "hint": "바닷물 맛을 떠올려 봐. 그 '짠맛'의 정체가 뭐였지?",
+   "answer_hashes": [
+    "3d09660e62955de5ce0d1bd42c098fa347568186b0c10fbf1239b3dd2b43a019",
+    "1da3baae746e2f2e1527b6d5ba5aa96525ef86881df565bf17843adf6e0efe03",
+    "12a70e7898ce81b374fef08b9092029e0d4784c9d0f143e9777b4ed6dba80369"
+   ],
+   "reveal": "IuyGjOq4iCI="
+  },
+  {
+   "id": "q2",
+   "title": "일일 퀘스트: 생존 기초 ② 불",
+   "question": "불씨를 옮겨 붙여 불을 크게 키우는\n마른 풀·나뭇조각을 무엇이라 하는가?",
+   "hint": "불○○개. 불을 '쑤셔서' 일으킨다는 뜻이야.",
+   "answer_hashes": [
+    "f2a6be6a2ba0f39c2511f681652ce0b3904a9445152829a768bb303e4e575ae9",
+    "920d9d3dc9d752f9111a2041c5497e1a48a9be70315e43cfc0bb03d86b07d022"
+   ],
+   "reveal": "Iuu2iOyPmOyLnOqwnCI="
+  },
+  {
+   "id": "q3",
+   "title": "일일 퀘스트: 생존 기초 ③ 구조",
+   "question": "모래사장에 크게 써서 구조를 요청하는\n국제 조난 신호 알파벳 세 글자는?",
+   "hint": "모스 부호로 · · · − − − · · · 야. 앞뒤가 같은 글자지.",
+   "answer_hashes": [
+    "c0946106b732f9f6ae889101ab987ed1bbcfe3eda2ad0a971be31575ad676851"
+   ],
+   "reveal": "InNvcyI="
+  },
+  {
+   "id": "q4",
+   "title": "일일 퀘스트: 생존 기초 ④ 수분",
+   "question": "사람이 하루에 마셔야 하는 물은\n최소 약 몇 리터인가? (숫자)",
+   "hint": "편의점 큰 생수병 한 병 정도였어.",
+   "answer_hashes": [
+    "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35",
+    "146784ea9d0a153df7d6b0eb759d2a2de6f9e32987cfbb72c4d3727ec343d8f3",
+    "f2c115a382c600ed22499dcf02cf738a69775c29b84933151714c790dd1b7286"
+   ],
+   "reveal": "IjIi"
+  },
+  {
+   "id": "q5",
+   "title": "일일 퀘스트: 생존 기초 ⑤ 방향",
+   "question": "나침반이 없을 때, 아침에 해가 떠오르는 쪽은\n어느 방향인가?",
+   "hint": "'동해 물과 백두산이~' 해가 뜨는 바다 쪽이야.",
+   "answer_hashes": [
+    "70d46f8c1cc5dc7aa4df66d3825791af5058a95461104021b9e6d2c7997cb6ff",
+    "e31f1a7f27373268531fc5d8fd1f746b739043d92293bf12201e6564bc912579"
+   ],
+   "reveal": "IuuPmSI="
+  }
+ ],
+ "castaways": [
+  {
+   "id": "researcher",
+   "name": "구명조끼를 입은 여성",
+   "story": "파도에 실려 온 나무판자 위에 한 여성이 엎드려 있다. 숨은 붙어 있다.",
+   "clues": [
+    "구명조끼 가슴에 '해양 연구소' 로고가 박혀 있다.",
+    "손목에 방수 시계와 작은 GPS 장치를 차고 있다.",
+    "방수 가방 안에 날짜별로 꼼꼼히 적은 해류 관측 일지가 있다."
+   ],
+   "image": "castaway_researcher.jpg",
+   "secret": "eyJ0cnV0aCI6ICJhbGx5IiwgImJlc3QiOiAidHJ1c3QiLCAidHJ1dGhfbmFtZSI6ICLrr7/snYQg7IiYIOyeiOuKlCDsobDroKXsnpAiLCAiZXhwbGFpbiI6ICLroZzqs6DCt+yepeu5hMK36ry86ry87ZWcIOq4sOuhnSwg7IS4IOuLqOyEnOqwgCDrqqjrkZAgJ+yXsOq1rOyZgCDqtazsobAn66W8IOqwgOumrOy8sOyWtC4g66+/7Ja064+EIOuQmOuKlCDsgqzrnozsnbTsl4jsp4AuIiwgInJld2FyZF9pdGVtcyI6IFsi6rWs7KGwIOustOyghOq4sCIsICLsi6DtmLjtg4QiXX0="
+  },
+  {
+   "id": "suit",
+   "name": "정장 차림의 남자",
+   "story": "젖은 정장을 입은 남자가 부서진 보트 조각을 붙잡고 해안에 닿았다.",
+   "clues": [
+    "비싼 정장인데, 소매가 남의 옷처럼 손등까지 내려온다.",
+    "정신을 차리자마자 '다른 생존자는 없지?'라고 먼저 묻는다.",
+    "안주머니에서 이름이 서로 다른 지갑 세 개가 삐져나와 있다."
+   ],
+   "image": "castaway_suit.jpg",
+   "secret": "eyJ0cnV0aCI6ICJ0aGllZiIsICJiZXN0IjogImd1YXJkIiwgInRydXRoX25hbWUiOiAi67O06riJ7ZKI7J2EIOuFuOumsCDsgqzrnowiLCAiZXhwbGFpbiI6ICLrqrjsl5Ag7JWIIOunnuuKlCDsmLcsIOuLpOuluCDsgqzrnozsnbQg7JeG64qU7KeA67aA7YSwIO2ZleyduCwg64Ko7J2YIOyngOqwkSDsl6zrn6wg6rCcLiDqtazsobDripQg7ZWY65CYIOqwgOuwqeydgCDsp4DsvJzslbwg7ZaI7Ja0LiIsICJyZXdhcmRfaXRlbXMiOiBbXX0="
+  },
+  {
+   "id": "fisherman",
+   "name": "늙은 낚시꾼",
+   "story": "낡은 낚싯배 파편과 함께 노인이 모래 위로 밀려왔다.",
+   "clues": [
+    "손바닥 곳곳에 낚싯줄에 쓸린 굳은살이 있다.",
+    "모자에 낚싯바늘이 여러 개 꽂혀 있다.",
+    "깨어나자 하늘을 보며 '내일은 남풍이라 고기가 잘 잡히겠군' 하고 중얼거린다."
+   ],
+   "image": "castaway_fisherman.jpg",
+   "secret": "eyJ0cnV0aCI6ICJhbGx5IiwgImJlc3QiOiAidHJ1c3QiLCAidHJ1dGhfbmFtZSI6ICLrr7/snYQg7IiYIOyeiOuKlCDsobDroKXsnpAiLCAiZXhwbGFpbiI6ICLqtbPsnYDsgrTCt+uCmuyLr+uwlOuKmMK364Kg7JSo66W8IOydveuKlCDsirXqtIAuIOyYpOuenCDqsr3tl5jsnYQg6rCA7KeEIOynhOynnCDslrTrtoDsmIDslrQuIOyErCDsg53tmZzsnZgg7Iqk7Iq57J20IOuQoCDsgqzrnozsnbTsp4AuIiwgInJld2FyZF9pdGVtcyI6IFsi64Ka7Iuv64yAIiwgIuunkOumsCDsg53shKAiXX0="
+  },
+  {
+   "id": "soldier",
+   "name": "군복 차림의 청년",
+   "story": "찢어진 군복을 입은 청년이 기침을 하며 해안가로 기어 올라왔다.",
+   "clues": [
+    "목에 건 군번줄의 이름과, 그가 말한 이름이 다르다.",
+    "자기 팔의 상처를 붕대로 능숙하게 감는다.",
+    "음식을 보자 눈을 떼지 못한다. 며칠은 굶은 것 같다."
+   ],
+   "image": "castaway_soldier.jpg",
+   "secret": "eyJ0cnV0aCI6ICJuZXV0cmFsIiwgImJlc3QiOiAiZ3VhcmQiLCAidHJ1dGhfbmFtZSI6ICLrk53si6TsnbQg67CY67CY7J24IOyCrOuejCIsICJleHBsYWluIjogIuydtOumhOydtCDri6Trpbgg6rG0IOydmOyLrOyKpOufveyngOunjCDsnZHquInsspjsuZgg7Iac7JSo64qUIOyTuOuqqCDsnojqs6AsIOq1tuyjvOumvOydgCDrtoDri7TsnbTslbwuIOuTneuPhCDsi6Trj4Qg67CY67CY7J24IOyCrOuejOydtOudvCDqsr3qs4TtlZjrqbAg7KeA7Lyc67O064qUIOqyjCDqsIDsnqUg66y064Kc7ZaI7Ja0LiIsICJyZXdhcmRfaXRlbXMiOiBbXX0="
+  },
+  {
+   "id": "sunglasses",
+   "name": "선글라스를 낀 여성",
+   "story": "빨간 재킷을 입은 여성이 고무보트에서 굴러떨어져 해안에 쓰러졌다.",
+   "clues": [
+    "고무보트에 구멍 하나 없이 멀쩡하다. 조난이라기엔 이상하다.",
+    "'구조 신호'라는 말을 듣자 표정이 굳는다.",
+    "재킷 안쪽에 이 섬의 좌표와 '보급품 위치'라고 적힌 쪽지가 있다."
+   ],
+   "image": "castaway_sunglasses.jpg",
+   "secret": "eyJ0cnV0aCI6ICJ0aGllZiIsICJiZXN0IjogImd1YXJkIiwgInRydXRoX25hbWUiOiAi67O06riJ7ZKI7J2EIOuFuOumsCDsgqzrnowiLCAiZXhwbGFpbiI6ICLrqYDsqaHtlZwg67O07Yq4LCDqtazsobDrpbwg7Iur7Ja07ZWY64qUIO2RnOyglSwg67O06riJ7ZKI7J2EIOuFuOumrOuKlCDsqr3sp4AuIOyhsOuCnOyekOqwgCDslYTri4jrnbwg67O06riJ7ZKI7J2EIOuFuOumrOqzoCDsmKgg7IKs656M7J207JeI7Ja0LiIsICJyZXdhcmRfaXRlbXMiOiBbXX0="
+  }
+ ]
+}
