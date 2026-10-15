@@ -74,6 +74,127 @@
     "e31f1a7f27373268531fc5d8fd1f746b739043d92293bf12201e6564bc912579"
    ],
    "reveal": "IuuPmSI="
+  },
+  {
+   "id": "q6",
+   "title": "일일 퀘스트: 생존 기초 ⑥ 식량",
+   "question": "바닷가 바위에 붙어 사는 검은 껍데기의 조개로,\n익혀서 먹을 수 있는 것은?",
+   "hint": "짬뽕에 자주 들어가는 그 검은 조개야.",
+   "answer_hashes": [
+    "37fdfe1edebbade53f003a8bd7827978a71df34032a753678964911006cf25b6",
+    "6e42304a959c9509b44e4f4380af279a8f3dc621616a1e2eaad4ffcda5735d17"
+   ],
+   "reveal": "Iu2Zje2VqSI="
+  },
+  {
+   "id": "q7",
+   "title": "일일 퀘스트: 생존 기초 ⑦ 체온",
+   "question": "바닷물에 오래 젖어 체온이 35도 아래로 떨어지는\n위험한 상태를 무엇이라 하는가?",
+   "hint": "'저○○증'. 체온이 낮다는 뜻이야.",
+   "answer_hashes": [
+    "c6ef9b3e63df03a36f5b85e1a9d46d40a73abbd83ffab8f4eb7cf14106d4acd9",
+    "291d7063573c3c3dac4af2ff2a78b6fb242147b2c2905df0c762bc254fbd42aa"
+   ],
+   "reveal": "IuyggOyytOyYqOymnSI="
+  },
+  {
+   "id": "q8",
+   "title": "일일 퀘스트: 생존 기초 ⑧ 응급",
+   "question": "상처에서 피가 날 때 깨끗한 천으로 꾹 눌러\n피를 멈추게 하는 응급처치는?",
+   "hint": "피(혈)를 멈춘다(지)는 두 글자야.",
+   "answer_hashes": [
+    "1a4aa4eea6455fafee7505a17a574eff467bfe196ae7d7692fe0de6d44905923",
+    "f04671b1a9a7c645aa9f306598506434bff51bde3214e5e01345da24d0ace5b9",
+    "8bb0ec6a84a5a996f989d79576d5947b124afd8290b9e05bf049ee1cda0ede8e",
+    "3e6909afb87c99bc82dfcd1b4468dfd79e6d40cb404c2968193760cd61ad9c05"
+   ],
+   "reveal": "IuyngO2YiCI="
+  },
+  {
+   "id": "q9",
+   "title": "일일 퀘스트: 생존 기초 ⑨ 정수",
+   "question": "빗물이나 계곡물 속 세균을 없애는 가장 확실한 방법은\n물을 1분 이상 어떻게 하는 것인가?",
+   "hint": "냄비에 담아 불 위에서 보글보글~",
+   "answer_hashes": [
+    "7650f5477e74baa0cb5ea4ae73a3af4259ccf04d70919f75f12116f32c094fa6",
+    "48a96115cd432d7ef536e5d73479d1b46574c1e79640d6b84a4aa1b4ab58c440",
+    "e0e928624bcebfda14cac2f5eed6f44e931a206f4772c6fefd5639dbd114a20b",
+    "6b468b12dce73bd7d34d8c8e3aecbe53dd22258740f7fc4fdb98d30ac726df04",
+    "8872d5c3c5f4ada2edc5ff1d3201667e4d8d695f6ded725b8c13ac41b91bd1f5",
+    "c3f597952f49551077492e44f781b7960a09c2823a802445a15639f315ba8153"
+   ],
+   "reveal": "IuuBk+ydtOq4sCI="
+  },
+  {
+   "id": "q10",
+   "title": "일일 퀘스트: 생존 기초 ⑩ 증류",
+   "question": "바닷물을 끓여 나온 수증기를 모아 식혀서\n민물을 얻는 방법을 무엇이라 하는가?",
+   "hint": "'증○'. 수증기의 '증'으로 시작해.",
+   "answer_hashes": [
+    "8de9f16e89bd61cf028443fc905802769b27a6947117ab84bd530433e0d4ca91",
+    "824bf967ed37cdc1106a7dd1daf49d26fef573909ada8fed708e6936357ab1d8"
+   ],
+   "reveal": "IuymneulmCI="
+  },
+  {
+   "id": "q11",
+   "title": "일일 퀘스트: 생존 기초 ⑪ 신호",
+   "question": "낮에 멀리 있는 배나 비행기에 햇빛을 반사해\n구조 신호를 보낼 때 쓰는 물건은?",
+   "hint": "아침마다 얼굴을 비춰 보는 그 물건이야.",
+   "answer_hashes": [
+    "d30e5128c801fcdbc729f4feb0097e5144641e1d01f6020ea73102ca78f27f67",
+    "2038e8e805cd4a5e630aba201fc1901bf21bd3337414cda68ecfa89a1a5558a6",
+    "b6119af554d0fd9e72096c2d8598d67c267240fb8d0eaccc4564944b9d57b9c3"
+   ],
+   "reveal": "IuqxsOyauCI="
+  },
+  {
+   "id": "q12",
+   "title": "일일 퀘스트: 생존 기초 ⑫ 더위",
+   "question": "뜨거운 햇볕 아래 오래 있어 몸의 체온 조절이\n고장 나는 위험한 병은?",
+   "hint": "'열○병' 또는 '일○병'. 뜨거운 열·해 때문에 생겨.",
+   "answer_hashes": [
+    "07e81233e2c3fae6f0de6b3587cf7571a12b267d27be44959355acb7582e4cd3",
+    "41277f174fb3e79e05e28de61a0dda58c41b2b6593d21fcff9f9b08a27b30d55"
+   ],
+   "reveal": "IuyXtOyCrOuzkSI="
+  },
+  {
+   "id": "q13",
+   "title": "일일 퀘스트: 생존 기초 ⑬ 불씨",
+   "question": "성냥이 없을 때 햇빛을 한 점에 모아 불을 붙일 수 있는\n렌즈의 종류는? (○○렌즈)",
+   "hint": "가운데가 불룩 튀어나온 렌즈. 돋보기가 바로 이거야.",
+   "answer_hashes": [
+    "d587066802e13110e80c9fa71fcec552e62d34d0778d77538473b6b14a2b243f",
+    "23ea90d9d6be44b398302889d959a052be94eda8f0cecbfcf1e824f6dbfffbcb"
+   ],
+   "reveal": "IuuzvOuhneugjOymiCI="
+  },
+  {
+   "id": "q14",
+   "title": "일일 퀘스트: 생존 기초 ⑭ 잠자리",
+   "question": "밤에 맨땅에 그냥 누우면 위험한 이유는\n차가운 땅이 몸의 무엇을 빼앗아 가기 때문인가? (한 글자)",
+   "hint": "몸의 '따뜻함'을 한 글자로 하면?",
+   "answer_hashes": [
+    "6f4112362e973dd65e6529161511e93452b838bedb42e4172f33aaca18925fe7",
+    "b2e63fe36c8e88707bcd5b6a1013fe3bb4625c6e1710bd61be58dd17a5ce1b1e",
+    "7dfd5197f9bc21aed9fb2bd024162b4dd04ce8fd22d10b3530a34ebc799fb370"
+   ],
+   "reveal": "IuyXtCI="
+  },
+  {
+   "id": "q15",
+   "title": "일일 퀘스트: 생존 기초 ⑮ 법칙",
+   "question": "생존 '3의 법칙': 사람은 공기 없이 3분, 물 없이 3일,\n음식 없이 약 3○를 버틸 수 있다. ○는?",
+   "hint": "분 → 일 → ○. 한 달보다 조금 짧은 단위야.",
+   "answer_hashes": [
+    "6234d5b178a8b25809d84955b920b10df35485da32504c3e99f4b1fef7cca06a",
+    "f8fc71b898695b94dae3940ff8d6ef060a588fe3238cc359bb2be0c2cd32d4e6",
+    "7bd8a4638fe804a2c3b7fb01f96cb71bae6a21ee07a68638f901d1f796111f1e",
+    "9b9d25ecc8de1690818a49612d207c55d00d31e82f42e7dbde3b2424a47f7096",
+    "aeb6f0e2f3064ad8d5cfa61e50932836932823068ece30667f59e726604a1bc0"
+   ],
+   "reveal": "IuyjvCI="
   }
  ],
  "castaways": [
