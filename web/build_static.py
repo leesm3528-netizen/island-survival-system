@@ -42,13 +42,10 @@ def build_data():
     for c in gd.CASTAWAYS:
         secret = {"truth": c["truth"], "best": gd.BEST_CHOICE[c["truth"]],
                   "truth_name": gd.TRUTH_NAME[c["truth"]], "explain": c["explain"],
-                  "reward_items": c.get("reward_items", [])}
+                  "reward_items": c.get("reward_items", []), "effects": c.get("effects", {})}
         castaways.append({k: c[k] for k in ("id", "name", "story", "clues", "image")} | {"secret": encode(secret)})
         # 딕셔너리1 | 딕셔너리2 = 두 딕셔너리를 합친 새 딕셔너리
-    rules = {"max_tries": gd.MAX_TRIES, "exp_per_level": gd.EXP_PER_LEVEL, "event_chance": gd.EVENT_CHANCE,
-             "exp_first_try": gd.EXP_FIRST_TRY, "exp_with_hint": gd.EXP_WITH_HINT,
-             "supplies": gd.SUPPLIES, "foods": gd.FOODS}
-    return {"rules": rules, "quests": quests, "castaways": castaways}
+    return {"rules": gd.public_rules(), "quests": quests, "castaways": castaways}
 
 
 def main():

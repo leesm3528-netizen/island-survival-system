@@ -6,79 +6,32 @@
 # (tkinter 버전 island_system.py의 데이터·규칙을 웹용으로 옮겨 온 것)
 # ─────────────────────────────────────────────────────────────
 
+import json
 import random
+from pathlib import Path
 
 MAX_TRIES = 2
 EXP_FIRST_TRY = 40
 EXP_WITH_HINT = 20
-EXP_PER_LEVEL = 100
-EVENT_CHANCE = 0.4
+EXP_BASE = 100          # Lv.1 → 2에 필요한 EXP
+EXP_STEP = 80           # 레벨이 오를 때마다 필요 EXP가 이만큼 늘어난다 (100 → 180 → 260 ...)
+EVENT_CHANCE = 0.3
+
+# ── 엔딩: 탈출 준비도 ──
+# 퀘스트를 클리어할 때마다 탈출 준비도가 쌓이고, 100이 되면 섬을 탈출(엔딩)한다.
+# 표류자 선택으로 얻은 버프(+)·디버프(-)가 '퀘스트마다 쌓이는 양'을 바꾼다.
+ESCAPE_GOAL = 100
+ESCAPE_FIRST_TRY = 5      # 한 번에 맞혔을 때
+ESCAPE_WITH_HINT = 3      # 힌트를 보고 맞혔을 때
+ESCAPE_MIN = 2            # 디버프가 아무리 커도 최소 이만큼은 쌓인다 (언젠가는 탈출 가능)
+QUESTS_PER_DAY = 5        # 퀘스트 5개 = 하루
 
 SUPPLIES = ["생수 2병", "통조림", "구급상자", "신호탄", "라이터"]
 FOODS = ["통조림", "말린 생선", "생수 2병"]
 
-QUESTS = [
-    {"id": "q1", "title": "일일 퀘스트: 생존 기초 ① 물",
-     "question": "바닷물을 그대로 마시면 안 되는 이유는\n물속에 무엇이 너무 많기 때문인가? (한 단어)",
-     "answers": ["소금", "염분", "나트륨"],
-     "hint": "바닷물 맛을 떠올려 봐. 그 '짠맛'의 정체가 뭐였지?"},
-    {"id": "q2", "title": "일일 퀘스트: 생존 기초 ② 불",
-     "question": "불씨를 옮겨 붙여 불을 크게 키우는\n마른 풀·나뭇조각을 무엇이라 하는가?",
-     "answers": ["불쏘시개", "부싯깃"],
-     "hint": "불○○개. 불을 '쑤셔서' 일으킨다는 뜻이야."},
-    {"id": "q3", "title": "일일 퀘스트: 생존 기초 ③ 구조",
-     "question": "모래사장에 크게 써서 구조를 요청하는\n국제 조난 신호 알파벳 세 글자는?",
-     "answers": ["sos"],
-     "hint": "모스 부호로 · · · − − − · · · 야. 앞뒤가 같은 글자지."},
-    {"id": "q4", "title": "일일 퀘스트: 생존 기초 ④ 수분",
-     "question": "사람이 하루에 마셔야 하는 물은\n최소 약 몇 리터인가? (숫자)",
-     "answers": ["2", "2리터", "2l"],
-     "hint": "편의점 큰 생수병 한 병 정도였어."},
-    {"id": "q5", "title": "일일 퀘스트: 생존 기초 ⑤ 방향",
-     "question": "나침반이 없을 때, 아침에 해가 떠오르는 쪽은\n어느 방향인가?",
-     "answers": ["동", "동쪽"],
-     "hint": "'동해 물과 백두산이~' 해가 뜨는 바다 쪽이야."},
-    {"id": "q6", "title": "일일 퀘스트: 생존 기초 ⑥ 식량",
-     "question": "바닷가 바위에 붙어 사는 검은 껍데기의 조개로,\n익혀서 먹을 수 있는 것은?",
-     "answers": ["홍합", "섭"],
-     "hint": "짬뽕에 자주 들어가는 그 검은 조개야."},
-    {"id": "q7", "title": "일일 퀘스트: 생존 기초 ⑦ 체온",
-     "question": "바닷물에 오래 젖어 체온이 35도 아래로 떨어지는\n위험한 상태를 무엇이라 하는가?",
-     "answers": ["저체온증", "저체온"],
-     "hint": "'저○○증'. 체온이 낮다는 뜻이야."},
-    {"id": "q8", "title": "일일 퀘스트: 생존 기초 ⑧ 응급",
-     "question": "상처에서 피가 날 때 깨끗한 천으로 꾹 눌러\n피를 멈추게 하는 응급처치는?",
-     "answers": ["지혈", "압박", "압박지혈", "직접압박"],
-     "hint": "피(혈)를 멈춘다(지)는 두 글자야."},
-    {"id": "q9", "title": "일일 퀘스트: 생존 기초 ⑨ 정수",
-     "question": "빗물이나 계곡물 속 세균을 없애는 가장 확실한 방법은\n물을 1분 이상 어떻게 하는 것인가?",
-     "answers": ["끓이기", "끓인다", "끓이다", "끓여서", "끓임", "끓여"],
-     "hint": "냄비에 담아 불 위에서 보글보글~"},
-    {"id": "q10", "title": "일일 퀘스트: 생존 기초 ⑩ 증류",
-     "question": "바닷물을 끓여 나온 수증기를 모아 식혀서\n민물을 얻는 방법을 무엇이라 하는가?",
-     "answers": ["증류", "증류법"],
-     "hint": "'증○'. 수증기의 '증'으로 시작해."},
-    {"id": "q11", "title": "일일 퀘스트: 생존 기초 ⑪ 신호",
-     "question": "낮에 멀리 있는 배나 비행기에 햇빛을 반사해\n구조 신호를 보낼 때 쓰는 물건은?",
-     "answers": ["거울", "손거울", "신호거울"],
-     "hint": "아침마다 얼굴을 비춰 보는 그 물건이야."},
-    {"id": "q12", "title": "일일 퀘스트: 생존 기초 ⑫ 더위",
-     "question": "뜨거운 햇볕 아래 오래 있어 몸의 체온 조절이\n고장 나는 위험한 병은?",
-     "answers": ["열사병", "일사병"],
-     "hint": "'열○병' 또는 '일○병'. 뜨거운 열·해 때문에 생겨."},
-    {"id": "q13", "title": "일일 퀘스트: 생존 기초 ⑬ 불씨",
-     "question": "성냥이 없을 때 햇빛을 한 점에 모아 불을 붙일 수 있는\n렌즈의 종류는? (○○렌즈)",
-     "answers": ["볼록렌즈", "볼록"],
-     "hint": "가운데가 불룩 튀어나온 렌즈. 돋보기가 바로 이거야."},
-    {"id": "q14", "title": "일일 퀘스트: 생존 기초 ⑭ 잠자리",
-     "question": "밤에 맨땅에 그냥 누우면 위험한 이유는\n차가운 땅이 몸의 무엇을 빼앗아 가기 때문인가? (한 글자)",
-     "answers": ["열", "체온", "온기"],
-     "hint": "몸의 '따뜻함'을 한 글자로 하면?"},
-    {"id": "q15", "title": "일일 퀘스트: 생존 기초 ⑮ 법칙",
-     "question": "생존 '3의 법칙': 사람은 공기 없이 3분, 물 없이 3일,\n음식 없이 약 3○를 버틸 수 있다. ○는?",
-     "answers": ["주", "3주", "삼주", "주일", "3주일"],
-     "hint": "분 → 일 → ○. 한 달보다 조금 짧은 단위야."},
-]
+# 퀘스트 100개는 저장소 맨 위의 quests.json 하나에 모아 두고, tkinter 버전과 같이 읽는다
+# (같은 문제를 두 파일에 따로 적으면 고칠 때 한쪽을 빠뜨리기 쉬워서)
+QUESTS = json.loads((Path(__file__).parent.parent / "quests.json").read_text(encoding="utf-8"))
 
 # image = perchanceai.app에서 만든 일러스트 (static/img 폴더)
 CASTAWAYS = [
@@ -88,12 +41,14 @@ CASTAWAYS = [
                "손목에 방수 시계와 작은 GPS 장치를 차고 있다.",
                "방수 가방 안에 날짜별로 꼼꼼히 적은 해류 관측 일지가 있다."],
      "reward_items": ["구조 무전기", "신호탄"],
+     "effects": {"trust": ["구조 무전기 연락", 5, 0], "guard": ["무전 주파수 메모", 2, 0]},
      "explain": "로고·장비·꼼꼼한 기록, 세 단서가 모두 '연구와 구조'를 가리켰어. 믿어도 되는 사람이었지."},
     {"id": "suit", "name": "정장 차림의 남자", "truth": "thief", "image": "castaway_suit.jpg",
      "story": "젖은 정장을 입은 남자가 부서진 보트 조각을 붙잡고 해안에 닿았다.",
      "clues": ["비싼 정장인데, 소매가 남의 옷처럼 손등까지 내려온다.",
                "정신을 차리자마자 '다른 생존자는 없지?'라고 먼저 묻는다.",
                "안주머니에서 이름이 서로 다른 지갑 세 개가 삐져나와 있다."],
+     "effects": {"trust": ["뗏목 재료 도난", -2, -10]},
      "explain": "몸에 안 맞는 옷, 다른 사람이 없는지부터 확인, 남의 지갑 여러 개. 구조는 하되 가방은 지켜야 했어."},
     {"id": "fisherman", "name": "늙은 낚시꾼", "truth": "ally", "image": "castaway_fisherman.jpg",
      "story": "낡은 낚싯배 파편과 함께 노인이 모래 위로 밀려왔다.",
@@ -101,12 +56,14 @@ CASTAWAYS = [
                "모자에 낚싯바늘이 여러 개 꽂혀 있다.",
                "깨어나자 하늘을 보며 '내일은 남풍이라 고기가 잘 잡히겠군' 하고 중얼거린다."],
      "reward_items": ["낚싯대", "말린 생선"],
+     "effects": {"trust": ["뗏목 만드는 법", 4, 0], "guard": ["물고기 잡는 요령", 2, 0]},
      "explain": "굳은살·낚싯바늘·날씨를 읽는 습관. 오랜 경험을 가진 진짜 어부였어. 섬 생활의 스승이 될 사람이지."},
     {"id": "soldier", "name": "군복 차림의 청년", "truth": "neutral", "image": "castaway_soldier.jpg",
      "story": "찢어진 군복을 입은 청년이 기침을 하며 해안가로 기어 올라왔다.",
      "clues": ["목에 건 군번줄의 이름과, 그가 말한 이름이 다르다.",
                "자기 팔의 상처를 붕대로 능숙하게 감는다.",
                "음식을 보자 눈을 떼지 못한다. 며칠은 굶은 것 같다."],
+     "effects": {"trust": ["응급처치 지식", 1, 0], "guard": ["섬 지도", 2, 0]},
      "explain": "이름이 다른 건 의심스럽지만 응급처치 솜씨는 쓸모 있고, 굶주림은 부담이야. "
                 "득도 실도 반반인 사람이라 경계하며 지켜보는 게 가장 무난했어."},
     {"id": "sunglasses", "name": "선글라스를 낀 여성", "truth": "thief", "image": "castaway_sunglasses.jpg",
@@ -114,11 +71,17 @@ CASTAWAYS = [
      "clues": ["고무보트에 구멍 하나 없이 멀쩡하다. 조난이라기엔 이상하다.",
                "'구조 신호'라는 말을 듣자 표정이 굳는다.",
                "재킷 안쪽에 이 섬의 좌표와 '보급품 위치'라고 적힌 쪽지가 있다."],
+     "effects": {"trust": ["보급품 위치 유출", -2, -10]},
      "explain": "멀쩡한 보트, 구조를 싫어하는 표정, 보급품을 노리는 쪽지. 조난자가 아니라 보급품을 노리고 온 사람이었어."},
 ]
 
 BEST_CHOICE = {"ally": "trust", "thief": "guard", "neutral": "guard"}
 TRUTH_NAME = {"ally": "믿을 수 있는 조력자", "thief": "보급품을 노린 사람", "neutral": "득실이 반반인 사람"}
+
+
+def exp_needed(level):
+    """이 레벨에서 다음 레벨로 가는 데 필요한 EXP. 레벨이 높을수록 많이 필요하다."""
+    return EXP_BASE + EXP_STEP * (level - 1)
 
 
 def normalize(text):
@@ -201,6 +164,8 @@ def resolve_choice(castaway_id, choice, inventory, exp):
         else:
             text, delta = f"{name}은(는) 며칠 뒤 다른 해안으로 떠났다. 아무 일도 없었다.", 10
 
+    # 엔딩에 영향을 주는 버프/디버프: [이름, 퀘스트마다 탈출 증감, 즉시 탈출 증감] 또는 None
+    effect = c.get("effects", {}).get(choice)
     return {
         "text": text,
         "exp_delta": delta,
@@ -208,6 +173,19 @@ def resolve_choice(castaway_id, choice, inventory, exp):
         "correct": choice == BEST_CHOICE[truth],
         "truth_name": TRUTH_NAME[truth],
         "explain": c["explain"],
+        "effect": {"name": effect[0], "mod": effect[1], "instant": effect[2]} if effect else None,
+    }
+
+
+def public_rules():
+    """브라우저가 알아야 하는 규칙 숫자들 (Flask·정적 배포 둘 다 이 함수를 쓴다)."""
+    return {
+        "max_tries": MAX_TRIES, "exp_base": EXP_BASE, "exp_step": EXP_STEP, "event_chance": EVENT_CHANCE,
+        "exp_first_try": EXP_FIRST_TRY, "exp_with_hint": EXP_WITH_HINT,
+        "escape_goal": ESCAPE_GOAL, "escape_first_try": ESCAPE_FIRST_TRY,
+        "escape_with_hint": ESCAPE_WITH_HINT, "escape_min": ESCAPE_MIN,
+        "quests_per_day": QUESTS_PER_DAY,
+        "supplies": SUPPLIES, "foods": FOODS,
     }
 
 

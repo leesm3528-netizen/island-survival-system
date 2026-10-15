@@ -29,8 +29,7 @@ def index():
 def setup():
     """게임 시작에 필요한 정보: 규칙 숫자, 퀘스트(정답 제외), 표류자(정체 제외)."""
     return jsonify({
-        "rules": {"max_tries": gd.MAX_TRIES, "exp_per_level": gd.EXP_PER_LEVEL,
-                  "event_chance": gd.EVENT_CHANCE},
+        "rules": gd.public_rules(),
         "quests": gd.public_quests(),
         "castaways": gd.public_castaways(),
     })

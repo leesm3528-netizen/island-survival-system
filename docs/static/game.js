@@ -72,7 +72,11 @@ function resolveLocal({ castaway_id, choice, inventory, exp }) {   // game_data.
     } else if (choice === "guard") { text = `거리를 두고 지켜보니 ${name}은(는) 섬 지도를 그려 두고 떠났다.`; delta = 30; }
     else { text = `${name}은(는) 며칠 뒤 다른 해안으로 떠났다. 아무 일도 없었다.`; delta = 10; }
   }
-  return { text, exp_delta: delta, inventory: inv, correct: choice === sec.best, truth_name: sec.truth_name, explain: sec.explain };
+  const e = (sec.effects || {})[choice];
+  return {
+    text, exp_delta: delta, inventory: inv, correct: choice === sec.best, truth_name: sec.truth_name, explain: sec.explain,
+    effect: e ? { name: e[0], mod: e[1], instant: e[2] } : null,
+  };
 }
 
 // ── 진행 상태 (Python 버전의 전역 변수들과 같은 역할) ──
@@ -81,7 +85,14 @@ const S = {
   inRetry: false, retry: [], weak: [], finished: false, judged: false, checking: false,
   level: 1, exp: 0, clear: 0, inventory: [],
   castawaysLeft: [], pending: [], busy: false, eventsSeen: 0, judgeLog: [],
+  // 엔딩용: 탈출 준비도, 버프/디버프 목록, 푼 퀘스트 수(→ 날짜 계산)
+  escape: 0, mods: [], attempts: 0,
 };
+
+// 레벨이 오를수록 다음 레벨까지 필요한 EXP가 늘어난다 (100 → 180 → 260 ...)
+const expNeed = (lv) => S.rules.exp_base + S.rules.exp_step * (lv - 1);
+const netMod = () => S.mods.reduce((sum, m) => sum + m.mod, 0);     // 버프·디버프 합계
+const day = () => 1 + Math.floor(S.attempts / S.rules.quests_per_day);
 
 function shuffle(list) {           // 순서 무작위로 섞기
   for (let i = list.length - 1; i > 0; i--) {
@@ -93,7 +104,7 @@ function shuffle(list) {           // 순서 무작위로 섞기
 
 // ── 상태창 ──
 function updateStatus() {
-  const per = S.rules.exp_per_level;
+  const per = expNeed(S.level);
   $("lv").textContent = `Lv.${S.level}`;
   $("expFill").style.width = `${(S.exp / per) * 100}%`;
   $("expText").textContent = `${S.exp} / ${per}`;
@@ -102,6 +113,13 @@ function updateStatus() {
   $("bag").innerHTML = S.inventory.length
     ? "가방 " + S.inventory.map((it) => `<span class="chip">${it}</span>`).join("")
     : "가방 · 비어 있음";
+  const pct = Math.min(100, Math.round((S.escape / S.rules.escape_goal) * 100));
+  $("escapeFill").style.width = `${pct}%`;
+  $("escapeText").textContent = `${pct}%`;
+  $("day").textContent = `DAY ${day()}`;
+  $("buffs").innerHTML = S.mods
+    .map((m) => `<span class="buff ${m.mod < 0 ? "debuff" : ""}">${m.mod < 0 ? "▼" : "▲"} ${m.name} ${m.mod > 0 ? "+" : ""}${m.mod}</span>`)
+    .join("");
   const flares = S.inventory.filter((it) => it === "신호탄").length;
   $("flare").textContent = `신호탄 쏘기 ×${flares}`;
   $("flare").disabled = !(flares > 0 && !S.judged && !S.finished && !S.busy && S.tries === 0);
@@ -122,8 +140,8 @@ function setFuture(text) {         // 미래의 나 말풍선
 function gainExp(amount) {         // EXP 얻기 → 레벨업 했으면 true
   S.exp += amount;
   let leveled = false;
-  while (S.exp >= S.rules.exp_per_level) {
-    S.exp -= S.rules.exp_per_level;
+  while (S.exp >= expNeed(S.level)) {
+    S.exp -= expNeed(S.level);
     S.level += 1;
     leveled = true;
   }
@@ -141,7 +159,7 @@ function lockInput(locked) {
 function showQuest() {
   S.judged = false;
   const q = S.order[S.current];
-  $("progress").textContent = `${S.inRetry ? "재도전" : "QUEST"} ${S.current + 1} / ${S.order.length}`;
+  $("progress").textContent = `DAY ${day()} · ${S.inRetry ? "재도전" : "QUEST"} ${S.current + 1} / ${S.order.length}`;
   $("qTitle").textContent = `【 ${q.title} 】`;
   $("qText").textContent = q.question;
   $("result").textContent = "";
@@ -165,25 +183,72 @@ function nextQuest() {
     notice("[알림] 재도전 퀘스트가 발동되었습니다.", "warn");
     showQuest();
   } else {
-    showSummary();
+    // 퀘스트를 다 풀었는데 아직 탈출 준비가 덜 됐다 → 퀘스트를 섞어서 다시 (혼자서도 결국은 탈출 가능)
+    S.order = shuffle([...S.quests]);
+    S.current = 0;
+    S.inRetry = false;
+    S.retry = [];
+    notice("[알림] 아직 섬을 벗어나지 못했다. 생존 퀘스트가 다시 시작된다.", "warn");
+    showQuest();
   }
 }
 
-function showSummary() {
+// 퀘스트 클리어 1번에 쌓이는 탈출 준비도 = 기본값 + 버프·디버프 합계 (최소 escape_min)
+function escapeGain(tries) {
+  const base = tries === 0 ? S.rules.escape_first_try : S.rules.escape_with_hint;
+  return Math.max(S.rules.escape_min, base + netMod());
+}
+
+// ── 엔딩: 버프·디버프 합계로 세 가지 결말이 갈린다 ──
+function showEnding() {
   S.finished = true;
-  const good = S.judgeLog.filter((j) => j.ok).length;
-  $("progress").textContent = "DAY 1 COMPLETE";
-  $("qTitle").textContent = "【 오늘의 일일 퀘스트 종료 】";
-  $("qText").textContent = `클리어 ${S.clear} / ${S.quests.length}   ·   최종 Lv.${S.level}\n표류자 판단 ${good} / ${S.judgeLog.length}`;
-  $("result").textContent = "";
-  if (S.weak.length === 0) {
-    setFuture("잘했어. 지식도, 사람을 보는 눈도 섬에서는 생존 기술이야.");
-  } else {
-    const names = S.weak.map((q) => q.title.split(" ").pop()).join(", ");
-    setFuture(`내일은 '${names}' 부분을 다시 공부하자.`);
-  }
   lockInput(true);
-  updateStatus();
+  const net = netMod();
+  const allies = S.mods.filter((m) => m.mod > 0).map((m) => m.who);
+  const betrayers = S.mods.filter((m) => m.mod < 0).map((m) => m.who);
+  const days = day();
+  const uniq = (list) => [...new Set(list)].join(", ");
+  let kind, title, story, future, cls;
+  if (net > 0) {
+    cls = "fast"; kind = "ENDING A · RESCUE";
+    title = "🚁 구조 헬기 귀환";
+    story = `${uniq(allies)}의 도움으로 탈출 준비가 빠르게 끝났다.\n생존 ${days}일째 아침, 무전을 받은 구조 헬기가 해안에 내려앉았다.`;
+    future = "사람을 보는 눈이 너를 살렸어. 혼자였다면 훨씬 오래 걸렸을 거야.";
+  } else if (net === 0) {
+    cls = "solo"; kind = "ENDING B · SOLO";
+    title = "🛶 홀로 뗏목 탈출";
+    story = `누구의 도움도 없이, 직접 배운 생존 지식만으로 뗏목을 완성했다.\n생존 ${days}일째, 혼자 노를 저어 수평선을 넘었다.`;
+    future = "오래 걸렸지만, 그 시간이 지금의 나를 만들었지.";
+  } else {
+    cls = "slow"; kind = "ENDING C · DRIFT";
+    title = "🌧 기나긴 표류";
+    story = `${uniq(betrayers)}에게 속아 귀한 것을 잃었다. 다시 처음부터 준비해야 했다.\n생존 ${days}일째, 비바람 속에서 겨우 섬을 떠났다.`;
+    future = "그때 단서를 더 살펴봤더라면… 사실, 이게 내가 겪은 이야기야. 그래서 이 시스템을 만든 거고.";
+  }
+  const scene = $("endScene");
+  scene.className = `scene end-scene ${cls}`;
+  scene.querySelector(".heli")?.remove();
+  $("raft").hidden = cls === "fast";
+  if (cls === "fast") {          // 레벨업 연출의 헬기를 복사해서 착륙 장면으로 재사용
+    const heli = $("heli").cloneNode(true);
+    heli.removeAttribute("id");
+    scene.appendChild(heli);
+    heli.animate([{ left: "110%", top: "5%" }, { left: "50%", top: "40%" }],
+      { duration: 2600, easing: "ease-out", fill: "forwards" });
+  } else {
+    $("raft").animate([{ left: "25%" }, { left: "70%" }], { duration: 9000, easing: "linear", fill: "forwards" });
+  }
+  const good = S.judgeLog.filter((j) => j.ok).length;
+  $("endKind").textContent = kind;
+  $("endKind").className = `end-kind ${cls === "fast" ? "ok" : cls === "slow" ? "bad" : "warn"}`;
+  $("endTitle").textContent = title;
+  $("endStory").textContent = story;
+  $("endFuture").textContent = future;
+  $("endStats").innerHTML = [
+    ["생존 일수", `${days}일`], ["푼 퀘스트", `${S.attempts}개`], ["최종 레벨", `Lv.${S.level}`],
+    ["클리어", `${S.clear}개`], ["표류자 판단", `${good} / ${S.judgeLog.length}`], ["버프 합계", `${net > 0 ? "+" : ""}${net}`],
+  ].map(([k, v]) => `<div>${k}<b>${v}</b></div>`).join("");
+  $("ending").hidden = false;
 }
 
 async function onSubmit(e) {
@@ -201,8 +266,11 @@ async function onSubmit(e) {
 
   if (res.correct) {
     S.clear += 1;
+    S.attempts += 1;
     S.judged = true;
-    $("result").innerHTML = `<span class="ok">▶ QUEST CLEAR &nbsp; EXP +${res.exp}</span>`;
+    const gain = escapeGain(S.tries);
+    S.escape += gain;
+    $("result").innerHTML = `<span class="ok">▶ QUEST CLEAR &nbsp; EXP +${res.exp} · 탈출 +${gain}</span>`;
     setFuture("");
     lockInput(true);
     const leveled = gainExp(res.exp);
@@ -218,6 +286,7 @@ async function onSubmit(e) {
     } else {
       $("result").innerHTML = `<span class="bad">▶ QUEST FAILED &nbsp; 정답: ${res.reveal}</span>`;
       (S.inRetry ? S.weak : S.retry).push(q);
+      S.attempts += 1;
       S.judged = true;
       lockInput(true);
       updateStatus();
@@ -247,6 +316,7 @@ function finishQuest(leveled, delay) {
   const go = async () => {
     if (S.busy) return setTimeout(go, 300);    // F2로 띄운 창이 떠 있으면 잠시 뒤 다시
     if (leveled) await playSupplyDrop();
+    if (S.escape >= S.rules.escape_goal) return showEnding();   // 탈출 준비 완료 → 엔딩
     await runEvents();
     nextQuest();
   };
@@ -367,6 +437,18 @@ function startEvent(c) {
       if (res.exp_delta > 0) leveled = gainExp(res.exp_delta);
       else { S.exp += res.exp_delta; updateStatus(); }
 
+      // 엔딩에 영향을 주는 버프/디버프 적용
+      let effectLine = "";
+      if (res.effect) {
+        const e = res.effect;
+        S.mods.push({ name: e.name, mod: e.mod, who: c.name });
+        S.escape = Math.max(0, S.escape + e.instant);
+        updateStatus();
+        effectLine = e.mod > 0
+          ? `<p class="effect-line ok">▲ 버프 [${e.name}] 퀘스트마다 탈출 +${e.mod}</p>`
+          : `<p class="effect-line bad">▼ 디버프 [${e.name}] 퀘스트마다 탈출 ${e.mod}${e.instant ? ` · 탈출 준비 ${e.instant}` : ""}</p>`;
+      }
+
       $("choices").hidden = true;
       $("evTip").hidden = true;
       const sign = res.exp_delta >= 0 ? "+" : "";
@@ -374,6 +456,7 @@ function startEvent(c) {
       box.innerHTML = `
         <div class="verdict ${res.correct ? "ok" : "bad"}">${res.correct ? "✔ 좋은 판단" : "✘ 아쉬운 판단"} &nbsp; EXP ${sign}${res.exp_delta}</div>
         <p class="what">${res.text}</p>
+        ${effectLine}
         <div class="truth">정체: ${res.truth_name}</div>
         <div class="future"><img src="static/img/future_me.jpg" alt=""><p><b>미래의 나</b>${res.explain}</p></div>
         <button class="btn primary" id="evContinue" type="button">계속 ▶</button>`;
@@ -422,7 +505,7 @@ async function init() {
   const data = await api("/api/setup");
   S.rules = data.rules;
   S.quests = data.quests;
-  S.order = [...data.quests];
+  S.order = shuffle([...data.quests]);   // 100문제를 매번 다른 순서로
   S.castawaysLeft = shuffle([...data.castaways]);
 
   $("answerForm").addEventListener("submit", onSubmit);
@@ -430,6 +513,7 @@ async function init() {
   document.addEventListener("keydown", (e) => {
     if (e.key === "F2") { e.preventDefault(); forceEvent(); }
   });
+  $("restart").addEventListener("click", () => location.reload());
   $("startBtn").addEventListener("click", () => {
     $("intro").hidden = true;
     $("answer").focus();

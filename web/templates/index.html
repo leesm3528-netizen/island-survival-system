@@ -28,6 +28,16 @@
       </div>
       <div class="meta" id="meta"></div>
     </section>
+    <!-- 엔딩 조건: 탈출 준비도 -->
+    <section class="escape">
+      <div class="day" id="day">DAY 1</div>
+      <div class="exp">
+        <div class="exp-label">탈출</div>
+        <div class="exp-bar"><div class="escape-fill" id="escapeFill"></div></div>
+        <div class="exp-text" id="escapeText">0%</div>
+      </div>
+    </section>
+    <div class="buffs" id="buffs"></div>
     <div class="bag" id="bag"></div>
     <div class="notice" id="notice"></div>
 
@@ -115,6 +125,22 @@
         <button class="btn choice" data-choice="watch" type="button">멀리서<small>지켜본다</small></button>
       </div>
       <div class="ev-result" id="evResult" hidden></div>
+    </div>
+  </div>
+
+  <!-- 엔딩 -->
+  <div class="overlay" id="ending" hidden>
+    <div class="end-card">
+      <div class="scene end-scene" id="endScene">
+        <div class="raft" id="raft"><div class="sail"></div><div class="mast"></div><div class="deck"></div></div>
+        <div class="rain"></div>
+      </div>
+      <div class="end-kind" id="endKind"></div>
+      <h2 class="end-title" id="endTitle"></h2>
+      <p class="end-story" id="endStory"></p>
+      <div class="future"><img src="static/img/future_me.jpg" alt="미래의 나"><p><b>미래의 나</b><span id="endFuture"></span></p></div>
+      <div class="end-stats" id="endStats"></div>
+      <button class="btn primary" id="restart" type="button">처음부터 다시</button>
     </div>
   </div>
 

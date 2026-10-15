@@ -1,6 +1,6 @@
 # island_system.py
 # ─────────────────────────────────────────────────────────────
-# 무인도 생존 교육 시스템 (3단계 개편)
+# 무인도 생존 교육 시스템 (엔딩 추가판)
 #   핵심 기능 ① 퀘스트를 차례로 출제하고 답 입력받기
 #   핵심 기능 ② CLEAR / 실패 판정 + 오답이면 '미래의 나'가 힌트 주기
 #   핵심 기능 ③ 경험치(EXP)·레벨업 + 실패한 퀘스트 재도전 목록
@@ -9,10 +9,15 @@
 #               → 단서를 보고 정체를 추리해 [믿는다 / 경계한다 / 지켜본다] 중 선택
 #               → 진행 중이던 퀘스트·레벨·EXP는 그대로 유지, 돌발 미션이 끝나면 이어서 진행
 #   시연용 키   F2 = 돌발 미션 바로 발생시키기 (무작위를 기다리지 않고 재현하려고)
+#   엔딩       탈출 준비도 100% → 버프·디버프 합계로 세 가지 결말 (헬기 / 혼자 뗏목 / 기나긴 표류)
+#   퀘스트     quests.json의 100문제를 매번 섞어서 출제 (웹판과 같은 파일을 함께 쓴다)
 # ─────────────────────────────────────────────────────────────
 
 import tkinter as tk
 import random   # 무작위 뽑기 도구 (보급품, 돌발 미션 발생 여부, 표류자 순서)
+import json     # quests.json(문제 데이터 파일)을 읽는 도구
+import os       # 파일 경로 다루기
+import subprocess, sys   # '처음부터 다시' 할 때 프로그램을 새로 실행하는 도구
 
 # ── 1. 색상과 글꼴 ──
 BG = "#0a0f1e"
@@ -30,107 +35,27 @@ FONT = "Malgun Gothic"
 MAX_TRIES = 2
 EXP_FIRST_TRY = 40
 EXP_WITH_HINT = 20
-EXP_PER_LEVEL = 100
+EXP_BASE = 100        # Lv.1 → 2에 필요한 EXP
+EXP_STEP = 80         # 레벨이 오를수록 필요 EXP가 이만큼씩 늘어난다 (100 → 180 → 260 ...)
 BAR_BLOCKS = 10
-EVENT_CHANCE = 0.4    # 퀘스트 하나가 끝날 때마다 돌발 미션이 생길 확률 (0.4 = 40%)
+EVENT_CHANCE = 0.3    # 퀘스트 하나가 끝날 때마다 돌발 미션이 생길 확률 (0.3 = 30%)
+
+# 엔딩: 탈출 준비도가 ESCAPE_GOAL에 닿으면 섬을 탈출한다
+ESCAPE_GOAL = 100
+ESCAPE_FIRST_TRY = 5  # 한 번에 맞혔을 때 쌓이는 탈출 준비도
+ESCAPE_WITH_HINT = 3  # 힌트를 보고 맞혔을 때
+ESCAPE_MIN = 2        # 디버프가 커도 최소 이만큼은 쌓인다 → 언젠가는 반드시 탈출 가능
+QUESTS_PER_DAY = 5    # 퀘스트 5개 = 하루
 
 SUPPLIES = ["생수 2병", "통조림", "구급상자", "신호탄", "라이터"]
 FOODS = ["통조림", "말린 생선", "생수 2병"]   # 다른 사람이 나눠 먹을 수 있는 물건
 
 # ── 3. 퀘스트 데이터 ──
-QUESTS = [
-    {
-        "title": "일일 퀘스트: 생존 기초 ① 물",
-        "question": "바닷물을 그대로 마시면 안 되는 이유는\n물속에 무엇이 너무 많기 때문인가? (한 단어)",
-        "answers": ["소금", "염분", "나트륨"],
-        "hint": "바닷물 맛을 떠올려 봐. 그 '짠맛'의 정체가 뭐였지?",
-    },
-    {
-        "title": "일일 퀘스트: 생존 기초 ② 불",
-        "question": "불씨를 옮겨 붙여 불을 크게 키우는\n마른 풀·나뭇조각을 무엇이라 하는가?",
-        "answers": ["불쏘시개", "부싯깃"],
-        "hint": "불○○개. 불을 '쑤셔서' 일으킨다는 뜻이야.",
-    },
-    {
-        "title": "일일 퀘스트: 생존 기초 ③ 구조",
-        "question": "모래사장에 크게 써서 구조를 요청하는\n국제 조난 신호 알파벳 세 글자는?",
-        "answers": ["sos"],
-        "hint": "모스 부호로 · · · − − − · · · 야. 앞뒤가 같은 글자지.",
-    },
-    {
-        "title": "일일 퀘스트: 생존 기초 ④ 수분",
-        "question": "사람이 하루에 마셔야 하는 물은\n최소 약 몇 리터인가? (숫자)",
-        "answers": ["2", "2리터", "2l"],
-        "hint": "편의점 큰 생수병 한 병 정도였어.",
-    },
-    {
-        "title": "일일 퀘스트: 생존 기초 ⑤ 방향",
-        "question": "나침반이 없을 때, 아침에 해가 떠오르는 쪽은\n어느 방향인가?",
-        "answers": ["동", "동쪽"],
-        "hint": "'동해 물과 백두산이~' 해가 뜨는 바다 쪽이야.",
-    },
-    # ── 퀘스트 추가 (⑥~⑮) ──
-    {
-        "title": "일일 퀘스트: 생존 기초 ⑥ 식량",
-        "question": "바닷가 바위에 붙어 사는 검은 껍데기의 조개로,\n익혀서 먹을 수 있는 것은?",
-        "answers": ["홍합", "섭"],
-        "hint": "짬뽕에 자주 들어가는 그 검은 조개야.",
-    },
-    {
-        "title": "일일 퀘스트: 생존 기초 ⑦ 체온",
-        "question": "바닷물에 오래 젖어 체온이 35도 아래로 떨어지는\n위험한 상태를 무엇이라 하는가?",
-        "answers": ["저체온증", "저체온"],
-        "hint": "'저○○증'. 체온이 낮다는 뜻이야.",
-    },
-    {
-        "title": "일일 퀘스트: 생존 기초 ⑧ 응급",
-        "question": "상처에서 피가 날 때 깨끗한 천으로 꾹 눌러\n피를 멈추게 하는 응급처치는?",
-        "answers": ["지혈", "압박", "압박지혈", "직접압박"],
-        "hint": "피(혈)를 멈춘다(지)는 두 글자야.",
-    },
-    {
-        "title": "일일 퀘스트: 생존 기초 ⑨ 정수",
-        "question": "빗물이나 계곡물 속 세균을 없애는 가장 확실한 방법은\n물을 1분 이상 어떻게 하는 것인가?",
-        "answers": ["끓이기", "끓인다", "끓이다", "끓여서", "끓임", "끓여"],
-        "hint": "냄비에 담아 불 위에서 보글보글~",
-    },
-    {
-        "title": "일일 퀘스트: 생존 기초 ⑩ 증류",
-        "question": "바닷물을 끓여 나온 수증기를 모아 식혀서\n민물을 얻는 방법을 무엇이라 하는가?",
-        "answers": ["증류", "증류법"],
-        "hint": "'증○'. 수증기의 '증'으로 시작해.",
-    },
-    {
-        "title": "일일 퀘스트: 생존 기초 ⑪ 신호",
-        "question": "낮에 멀리 있는 배나 비행기에 햇빛을 반사해\n구조 신호를 보낼 때 쓰는 물건은?",
-        "answers": ["거울", "손거울", "신호거울"],
-        "hint": "아침마다 얼굴을 비춰 보는 그 물건이야.",
-    },
-    {
-        "title": "일일 퀘스트: 생존 기초 ⑫ 더위",
-        "question": "뜨거운 햇볕 아래 오래 있어 몸의 체온 조절이\n고장 나는 위험한 병은?",
-        "answers": ["열사병", "일사병"],
-        "hint": "'열○병' 또는 '일○병'. 뜨거운 열·해 때문에 생겨.",
-    },
-    {
-        "title": "일일 퀘스트: 생존 기초 ⑬ 불씨",
-        "question": "성냥이 없을 때 햇빛을 한 점에 모아 불을 붙일 수 있는\n렌즈의 종류는? (○○렌즈)",
-        "answers": ["볼록렌즈", "볼록"],
-        "hint": "가운데가 불룩 튀어나온 렌즈. 돋보기가 바로 이거야.",
-    },
-    {
-        "title": "일일 퀘스트: 생존 기초 ⑭ 잠자리",
-        "question": "밤에 맨땅에 그냥 누우면 위험한 이유는\n차가운 땅이 몸의 무엇을 빼앗아 가기 때문인가? (한 글자)",
-        "answers": ["열", "체온", "온기"],
-        "hint": "몸의 '따뜻함'을 한 글자로 하면?",
-    },
-    {
-        "title": "일일 퀘스트: 생존 기초 ⑮ 법칙",
-        "question": "생존 '3의 법칙': 사람은 공기 없이 3분, 물 없이 3일,\n음식 없이 약 3○를 버틸 수 있다. ○는?",
-        "answers": ["주", "3주", "삼주", "주일", "3주일"],
-        "hint": "분 → 일 → ○. 한 달보다 조금 짧은 단위야.",
-    },
-]
+# 100문제는 같은 폴더의 quests.json에 있다 (웹판도 같은 파일을 읽는다)
+# os.path.dirname(__file__) = 이 파이썬 파일이 있는 폴더 → 어디서 실행해도 파일을 찾을 수 있다
+QUESTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "quests.json")
+with open(QUESTS_FILE, encoding="utf-8") as f:   # with = 다 읽으면 파일을 자동으로 닫아 준다
+    QUESTS = json.load(f)                        # json.load = JSON 글자 → 파이썬 리스트/딕셔너리
 
 # ── 돌발 미션: 해안가로 떠밀려 오는 표류자들 ──
 # truth(정체)는 화면에 처음엔 숨겨 두고, 플레이어가 단서로 추리한 뒤에 공개한다
@@ -148,6 +73,8 @@ CASTAWAYS = [
                   "손목에 방수 시계와 작은 GPS 장치를 차고 있다.",
                   "방수 가방 안에 날짜별로 꼼꼼히 적은 해류 관측 일지가 있다."],
         "reward_items": ["구조 무전기", "신호탄"],
+        # effects = 선택별 버프/디버프: (이름, 퀘스트마다 탈출 준비도 증감, 즉시 증감)
+        "effects": {"trust": ("구조 무전기 연락", 5, 0), "guard": ("무전 주파수 메모", 2, 0)},
         "explain": "로고·장비·꼼꼼한 기록, 세 단서가 모두 '연구와 구조'를 가리켰어. 믿어도 되는 사람이었지.",
     },
     {
@@ -157,6 +84,7 @@ CASTAWAYS = [
         "clues": ["비싼 정장인데, 소매가 남의 옷처럼 손등까지 내려온다.",
                   "정신을 차리자마자 '다른 생존자는 없지?'라고 먼저 묻는다.",
                   "안주머니에서 이름이 서로 다른 지갑 세 개가 삐져나와 있다."],
+        "effects": {"trust": ("뗏목 재료 도난", -2, -10)},
         "explain": "몸에 안 맞는 옷, 다른 사람이 없는지부터 확인, 남의 지갑 여러 개. 구조는 하되 가방은 지켜야 했어.",
     },
     {
@@ -167,6 +95,7 @@ CASTAWAYS = [
                   "모자에 낚싯바늘이 여러 개 꽂혀 있다.",
                   "깨어나자 하늘을 보며 '내일은 남풍이라 고기가 잘 잡히겠군' 하고 중얼거린다."],
         "reward_items": ["낚싯대", "말린 생선"],
+        "effects": {"trust": ("뗏목 만드는 법", 4, 0), "guard": ("물고기 잡는 요령", 2, 0)},
         "explain": "굳은살·낚싯바늘·날씨를 읽는 습관. 오랜 경험을 가진 진짜 어부였어. 섬 생활의 스승이 될 사람이지.",
     },
     {
@@ -176,6 +105,7 @@ CASTAWAYS = [
         "clues": ["목에 건 군번줄의 이름과, 그가 말한 이름이 다르다.",
                   "자기 팔의 상처를 붕대로 능숙하게 감는다.",
                   "음식을 보자 눈을 떼지 못한다. 며칠은 굶은 것 같다."],
+        "effects": {"trust": ("응급처치 지식", 1, 0), "guard": ("섬 지도", 2, 0)},
         "explain": "이름이 다른 건 의심스럽지만 응급처치 솜씨는 쓸모 있고, 굶주림은 부담이야. "
                    "득도 실도 반반인 사람이라 경계하며 지켜보는 게 가장 무난했어.",
     },
@@ -186,6 +116,7 @@ CASTAWAYS = [
         "clues": ["고무보트에 구멍 하나 없이 멀쩡하다. 조난이라기엔 이상하다.",
                   "'구조 신호'라는 말을 듣자 표정이 굳는다.",
                   "재킷 안쪽에 이 섬의 좌표와 '보급품 위치'라고 적힌 쪽지가 있다."],
+        "effects": {"trust": ("보급품 위치 유출", -2, -10)},
         "explain": "멀쩡한 보트, 구조를 싫어하는 표정, 보급품을 노리는 쪽지. 조난자가 아니라 보급품을 노리고 온 사람이었어.",
     },
 ]
@@ -198,7 +129,7 @@ BEST_CHOICE = {"ally": "trust", "thief": "guard", "neutral": "guard"}
 TRUTH_NAME = {"ally": "믿을 수 있는 조력자", "thief": "보급품을 노린 사람", "neutral": "득실이 반반인 사람"}
 
 # ── 4. 진행 상태 ──
-order = list(QUESTS)
+order = random.sample(QUESTS, len(QUESTS))   # random.sample = 섞인 복사본 (매번 다른 순서로 출제)
 current = 0
 tries = 0
 in_retry = False
@@ -220,6 +151,32 @@ busy = False           # 화면 위에 애니메이션이나 돌발 미션 창�
 events_seen = 0        # 지금까지 발생한 돌발 미션 수
 judge_log = []         # 판단 기록: (이름, 맞았는지) 튜플들
 
+# 엔딩용 상태
+escape = 0             # 탈출 준비도 (0 → ESCAPE_GOAL)
+mods = []              # 받은 버프/디버프: {'name', 'mod', 'who'} 딕셔너리들
+attempts = 0           # 판정이 끝난 퀘스트 수 (→ 생존 일수 계산)
+
+
+def exp_needed(lv):
+    """이 레벨에서 다음 레벨까지 필요한 EXP. 레벨이 높을수록 많이 필요하다."""
+    return EXP_BASE + EXP_STEP * (lv - 1)
+
+
+def net_mod():
+    """버프·디버프 합계. 플러스면 빨리, 마이너스면 느리게 탈출한다."""
+    return sum(m["mod"] for m in mods)
+
+
+def day():
+    """생존 일수 = 1 + (푼 퀘스트 수 ÷ 하루 퀘스트 수의 몫)."""
+    return 1 + attempts // QUESTS_PER_DAY
+
+
+def escape_gain(tries_used):
+    """퀘스트 클리어 1번에 쌓이는 탈출 준비도 = 기본값 + 버프 합계 (최소 ESCAPE_MIN)."""
+    base = ESCAPE_FIRST_TRY if tries_used == 0 else ESCAPE_WITH_HINT
+    return max(ESCAPE_MIN, base + net_mod())
+
 
 def normalize(text):
     return text.strip().replace(" ", "").lower()
@@ -233,14 +190,20 @@ def show_notice(text, color):
 
 # ── 5. 상태창 ──
 def update_status():
-    filled = exp * BAR_BLOCKS // EXP_PER_LEVEL
+    need = exp_needed(level)
+    filled = exp * BAR_BLOCKS // need
     bar = "■" * filled + "□" * (BAR_BLOCKS - filled)
     level_label.config(text=f"Lv.{level}")
-    exp_label.config(text=f"EXP {bar} {exp}/{EXP_PER_LEVEL}")
+    exp_label.config(text=f"EXP {bar} {exp}/{need}")
     good = sum(1 for _, ok in judge_log if ok)
     # sum(1 for ...) = 조건에 맞는 것이 몇 개인지 세기. _ 는 '안 쓰는 값'이라는 관례적 이름
     retry_count_label.config(text=f"재도전 {len(retry_list)} · 판단 {good}/{len(judge_log)}")
     bag_label.config(text=f"[가방] {', '.join(inventory) if inventory else '비어 있음'}")
+    pct = min(100, escape * 100 // ESCAPE_GOAL)
+    escape_label.config(text=f"DAY {day()}   탈출 준비 {'■' * (pct // 10)}{'□' * (10 - pct // 10)} {pct}%")
+    # :+d = 숫자 앞에 항상 부호(+/-)를 붙여 표시
+    buff_label.config(text="   ".join(f"{'▲' if m['mod'] > 0 else '▼'} {m['name']} {m['mod']:+d}" for m in mods),
+                      fg=GREEN if net_mod() >= 0 else RED)
     # 신호탄 버튼: 가방에 신호탄이 있고, 퀘스트를 푸는 중이고, 아직 힌트를 안 봤을 때만 누를 수 있다
     can_use = "신호탄" in inventory and not judged and not finished and not busy and tries == 0
     flare_button.config(state="normal" if can_use else "disabled",
@@ -269,8 +232,8 @@ def gain_exp(amount):
     global exp, level
     exp += amount
     leveled = False
-    while exp >= EXP_PER_LEVEL:
-        exp -= EXP_PER_LEVEL
+    while exp >= exp_needed(level):
+        exp -= exp_needed(level)
         level += 1
         leveled = True
     update_status()
@@ -484,7 +447,7 @@ def start_event(c, on_done):
     lock_input()   # 뒤에 있는 퀘스트 입력칸은 잠가 둔다 (진행 상태는 그대로)
 
     box = tk.Frame(root, bg=PANEL, highlightbackground=RED, highlightthickness=2)
-    box.place(relx=0.5, rely=0.5, anchor="center", width=550, height=610)
+    box.place(relx=0.5, rely=0.5, anchor="center", width=550, height=660)
     tk.Label(box, text="⚠ 돌발 미션 : 해안가에 표류자 발견", bg=PANEL, fg=RED,
              font=(FONT, 13, "bold")).pack(pady=(10, 6))
     cv = tk.Canvas(box, width=EV_W, height=EV_H, bg=BG, highlightthickness=0)
@@ -544,6 +507,12 @@ def start_event(c, on_done):
         correct = choice == BEST_CHOICE[c["truth"]]
         judge_log.append((c["name"], correct))
         leveled = gain_exp(gained) if gained > 0 else False
+        effect = c.get("effects", {}).get(choice)   # 엔딩에 영향을 주는 버프/디버프 (없으면 None)
+        if effect:
+            global escape
+            name, mod, instant = effect               # 튜플을 세 변수로 나눠 받기
+            mods.append({"name": name, "mod": mod, "who": c["name"]})
+            escape = max(0, escape + instant)
         update_status()
 
         verdict = "✔ 좋은 판단" if correct else "✘ 아쉬운 판단"
@@ -551,6 +520,13 @@ def start_event(c, on_done):
                  fg=GREEN if correct else RED, font=(FONT, 12, "bold")).pack(pady=(4, 2))
         tk.Label(info, text=text, bg=PANEL, fg=TEXT, font=(FONT, 10),
                  wraplength=500).pack()
+        if effect:
+            if mod > 0:
+                effect_text, effect_color = f"▲ 버프 [{name}] 퀘스트마다 탈출 +{mod}", GREEN
+            else:
+                effect_text, effect_color = f"▼ 디버프 [{name}] 퀘스트마다 탈출 {mod} · 탈출 준비 {instant}", RED
+            tk.Label(info, text=effect_text, bg=PANEL, fg=effect_color,
+                     font=(FONT, 10, "bold")).pack(pady=(2, 0))
         tk.Label(info, text=f"정체: {TRUTH_NAME[c['truth']]}", bg=PANEL, fg=GOLD,
                  font=(FONT, 10, "bold")).pack(pady=(4, 0))
         tk.Label(info, text=f"[미래의 나] {c['explain']}", bg=PANEL, fg=PURPLE,
@@ -612,7 +588,7 @@ def show_quest():
     judged = False
     quest = order[current]
     round_name = "재도전" if in_retry else "QUEST"
-    progress_label.config(text=f"{round_name} {current + 1} / {len(order)}")
+    progress_label.config(text=f"DAY {day()} · {round_name} {current + 1} / {len(order)}")
     title_label.config(text=f"【 {quest['title']} 】")
     question_label.config(text=quest["question"])
     hint_label.config(text="")
@@ -638,7 +614,13 @@ def next_quest():
         show_notice("[알림] 재도전 퀘스트가 발동되었습니다.", GOLD)
         show_quest()
     else:
-        show_summary()
+        # 문제를 다 풀었는데 아직 탈출 준비가 덜 됐다 → 섞어서 다시 (혼자서도 결국은 탈출 가능)
+        order = random.sample(QUESTS, len(QUESTS))
+        current = 0
+        in_retry = False
+        retry_list = []
+        show_notice("[알림] 아직 섬을 벗어나지 못했다. 생존 퀘스트가 다시 시작된다.", GOLD)
+        show_quest()
 
 
 def finish_quest(leveled, delay):
@@ -654,29 +636,106 @@ def finish_quest(leveled, delay):
         if busy:                     # F2로 띄운 창이 아직 떠 있으면 잠시 뒤 다시 시도
             root.after(300, go)
         elif leveled:
-            play_supply_drop(lambda: run_events_then(next_quest))
+            play_supply_drop(after_level)
+        else:
+            after_level()
+
+    def after_level():
+        # 탈출 준비 완료면 엔딩, 아니면 (돌발 미션) → 다음 퀘스트
+        if escape >= ESCAPE_GOAL:
+            show_ending()
         else:
             run_events_then(next_quest)
 
     root.after(delay, go)
 
 
-def show_summary():
-    global finished
+def draw_raft(cv, x, y):
+    """엔딩용 뗏목 (갑판 + 돛대 + 삼각 돛)."""
+    cv.delete("raft")
+    cv.create_rectangle(x - 22, y, x + 22, y + 7, fill="#8b5a2b", outline="#5c3b1e", tags="raft")
+    cv.create_line(x, y, x, y - 30, fill="#5c3b1e", width=3, tags="raft")
+    cv.create_polygon(x + 2, y - 30, x + 2, y - 4, x + 22, y - 6, fill="#f1e3c6", outline="", tags="raft")
+
+
+def draw_rain(cv, frame):
+    """기나긴 표류 엔딩의 비. frame마다 빗줄기 위치를 조금씩 옮긴다."""
+    cv.delete("rain")
+    for i in range(45):
+        rx = (i * 53 + frame * 7) % EV_W
+        ry = (i * 37 + frame * 11) % EV_H
+        cv.create_line(rx, ry, rx - 4, ry + 10, fill="#9fb3c8", tags="rain")
+
+
+def show_ending():
+    """탈출 준비도 100% → 엔딩. 버프·디버프 합계로 세 가지 결말이 갈린다."""
+    global finished, busy
     finished = True
-    progress_label.config(text="DAY 1 COMPLETE")
-    title_label.config(text="【 오늘의 일일 퀘스트 종료 】")
-    good = sum(1 for _, ok in judge_log if ok)
-    question_label.config(text=f"클리어 {clear_count} / {len(QUESTS)}   ·   최종 Lv.{level}\n"
-                               f"표류자 판단 {good} / {len(judge_log)}")
-    if len(weak_list) == 0:
-        hint_label.config(text="[미래의 나] 잘했어. 지식도, 사람을 보는 눈도 섬에서는 생존 기술이야.")
-    else:
-        weak_names = ", ".join(q["title"].split(" ")[-1] for q in weak_list)
-        hint_label.config(text=f"[미래의 나] 내일은 '{weak_names}' 부분을 다시 공부하자.")
-    result_label.config(text="")
+    busy = True
     lock_input()
-    update_status()
+    net = net_mod()
+    # dict.fromkeys(...) = 순서는 지키면서 중복 이름을 없애는 방법
+    allies = ", ".join(dict.fromkeys(m["who"] for m in mods if m["mod"] > 0))
+    betrayers = ", ".join(dict.fromkeys(m["who"] for m in mods if m["mod"] < 0))
+    days = day()
+    if net > 0:
+        kind, color, title = "ENDING A · RESCUE", GREEN, "구조 헬기 귀환"
+        story = (f"{allies}의 도움으로 탈출 준비가 빠르게 끝났다.\n"
+                 f"생존 {days}일째 아침, 무전을 받은 구조 헬기가 해안에 내려앉았다.")
+        future = "사람을 보는 눈이 너를 살렸어. 혼자였다면 훨씬 오래 걸렸을 거야."
+    elif net == 0:
+        kind, color, title = "ENDING B · SOLO", GOLD, "홀로 뗏목 탈출"
+        story = ("누구의 도움도 없이, 직접 배운 생존 지식만으로 뗏목을 완성했다.\n"
+                 f"생존 {days}일째, 혼자 노를 저어 수평선을 넘었다.")
+        future = "오래 걸렸지만, 그 시간이 지금의 나를 만들었지."
+    else:
+        kind, color, title = "ENDING C · DRIFT", RED, "기나긴 표류"
+        story = (f"{betrayers}에게 속아 귀한 것을 잃었다. 다시 처음부터 준비해야 했다.\n"
+                 f"생존 {days}일째, 비바람 속에서 겨우 섬을 떠났다.")
+        future = "그때 단서를 더 살펴봤더라면… 사실, 이게 내가 겪은 이야기야. 그래서 이 시스템을 만든 거고."
+
+    box = tk.Frame(root, bg=PANEL, highlightbackground=GOLD, highlightthickness=2)
+    box.place(relx=0.5, rely=0.5, anchor="center", width=550, height=540)
+    cv = tk.Canvas(box, width=EV_W, height=EV_H, bg=BG, highlightthickness=0)
+    cv.pack(pady=(14, 8))
+    draw_beach(cv)
+    if net < 0:   # 폭풍우: 하늘과 바다를 어둡게 다시 칠한다
+        cv.create_rectangle(0, 0, EV_W, 85, fill="#2b2f3a", outline="")
+        cv.create_rectangle(0, 85, EV_W, EV_H, fill="#1c3b52", outline="")
+        cv.create_polygon(0, 105, 140, 95, 250, EV_H, 0, EV_H, fill="#9c8a62", outline="")
+
+    def animate(frame):
+        if net > 0:   # 헬기가 날아와 해안에 내려앉는다
+            x = max(560 - 6 * frame, 300)
+            y = min(40 + frame, 105)
+            draw_helicopter(cv, x, y, frame)
+        else:         # 뗏목이 수평선 쪽으로 떠나간다 (표류 엔딩은 비까지)
+            draw_raft(cv, 240 + frame * 1.2, 112 + (2 if frame % 20 < 10 else -2))
+            if net < 0:
+                draw_rain(cv, frame)
+        if frame < 180:
+            root.after(40, animate, frame + 1)
+
+    animate(0)
+
+    good = sum(1 for _, ok in judge_log if ok)
+    tk.Label(box, text=kind, bg=PANEL, fg=color, font=(FONT, 10, "bold")).pack()
+    tk.Label(box, text=title, bg=PANEL, fg=GOLD, font=(FONT, 18, "bold")).pack(pady=(2, 6))
+    tk.Label(box, text=story, bg=PANEL, fg=TEXT, font=(FONT, 10), wraplength=500,
+             justify="center").pack()
+    tk.Label(box, text=f"[미래의 나] {future}", bg=PANEL, fg=PURPLE, font=(FONT, 10),
+             wraplength=500).pack(pady=(10, 10))
+    tk.Label(box, text=(f"생존 {days}일 · 푼 퀘스트 {attempts}개 · 최종 Lv.{level}\n"
+                        f"클리어 {clear_count}개 · 표류자 판단 {good}/{len(judge_log)} · 버프 합계 {net:+d}"),
+             bg=BG, fg=TEXT, font=(FONT, 10), padx=16, pady=8).pack()
+    tk.Button(box, text="처음부터 다시", command=restart_game, font=(FONT, 11, "bold"),
+              bg=GOLD, fg=BG, relief="flat", width=14).pack(pady=14)
+
+
+def restart_game():
+    """이 프로그램을 새로 실행하고 지금 창은 닫는다 → 모든 상태가 처음으로 돌아간다."""
+    subprocess.Popen([sys.executable, os.path.abspath(__file__)])
+    root.destroy()
 
 
 def lock_input():
@@ -686,7 +745,7 @@ def lock_input():
 
 
 def on_submit():
-    global tries, clear_count, judged
+    global tries, clear_count, judged, escape, attempts
     if busy or judged:   # 애니메이션·돌발 미션 중이거나 이미 판정했으면 무시
         return
     user_text = answer_entry.get()
@@ -700,7 +759,10 @@ def on_submit():
     if normalize(user_text) in correct_list:
         reward = EXP_FIRST_TRY if tries == 0 else EXP_WITH_HINT
         clear_count += 1
-        result_label.config(text=f"▶ QUEST CLEAR   EXP +{reward}", fg=GREEN)
+        attempts += 1
+        gain = escape_gain(tries)
+        escape += gain
+        result_label.config(text=f"▶ QUEST CLEAR   EXP +{reward} · 탈출 +{gain}", fg=GREEN)
         hint_label.config(text="")
         judged = True
         lock_input()
@@ -721,6 +783,7 @@ def on_submit():
                 weak_list.append(quest)
             else:
                 retry_list.append(quest)
+            attempts += 1
             judged = True
             update_status()
             lock_input()
@@ -730,7 +793,7 @@ def on_submit():
 # ── 9. 화면 만들기 ──
 root = tk.Tk()
 root.title("SYSTEM :: 무인도 생존 교육")
-root.geometry("600x660")
+root.geometry("600x740")
 root.configure(bg=BG)
 
 panel = tk.Frame(root, bg=PANEL, highlightbackground=GLOW, highlightthickness=2)
@@ -747,6 +810,12 @@ exp_label = tk.Label(status, text="", bg=BG, fg=GLOW, font=(FONT, 11))
 exp_label.pack(side="left", padx=4)
 retry_count_label = tk.Label(status, text="", bg=BG, fg=DIM, font=(FONT, 9))
 retry_count_label.pack(side="right", padx=10)
+
+# 엔딩 조건: 생존 일수 · 탈출 준비도 · 받은 버프/디버프
+escape_label = tk.Label(panel, text="", bg=PANEL, fg=GREEN, font=(FONT, 10, "bold"))
+escape_label.pack(pady=(4, 0))
+buff_label = tk.Label(panel, text="", bg=PANEL, fg=GREEN, font=(FONT, 9), wraplength=520)
+buff_label.pack()
 
 bag_label = tk.Label(panel, text="", bg=PANEL, fg=DIM, font=(FONT, 9))
 bag_label.pack(pady=(2, 0))
