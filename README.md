@@ -1,5 +1,8 @@
 # 무인도 생존 교육 시스템 (Python 미니 프로젝트)
 
+> 🎮 플레이: https://leesm3528-netizen.github.io/island-survival-system/
+> 📘 학습자용 정리(진행 과정·입력한 프롬프트·개념·디버깅 기록): [STUDY_NOTES.md](STUDY_NOTES.md)
+
 | 항목 | 내용 |
 |---|---|
 | 장르 | 교육 프로그램 |
