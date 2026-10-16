@@ -169,6 +169,19 @@ py app.py
 
 > 일러스트 출처: perchanceai.app (제3자 무료 생성 사이트, perchance.org 공식 사이트 아님). 공개 전 해당 사이트 이용약관 확인 필요.
 
+## 새 폴더에서 다시 받아 실행 확인 (2026-10-16)
+
+기존 작업 폴더가 아닌 새 위치(`python exercise\A18_새폴더_실행확인\`)에 `git clone`으로 처음부터 받아 확인했다.
+
+| # | 확인한 것 | 명령 | 결과 | 통과 |
+|---|---|---|---|---|
+| R1 | 필요한 파일이 모두 저장소에 있는가 | `git clone …` | `island_system.py`, `quests.json`, `web/`, `docs/`, README 2개 | ✅ |
+| R2 | tkinter 버전 실행 | `py island_system.py` | "SYSTEM :: 무인도 생존 교육" 창 열림 | ✅ |
+| R3 | 웹 버전 실행 | `cd web` → `py app.py` | `/api/setup` 응답: 퀘스트 100개, 표류자 5명 / 이미지 200 | ✅ |
+| R4 | 배포본 재생성 | `py build_static.py` | 생성 결과가 저장소와 동일 (`git status` 변경 없음) | ✅ |
+
+> 막힌 단계 없음. 단, 웹 버전은 Flask 설치(`py -m pip install flask`)가 먼저 필요하다.
+
 ## 자주 나는 오류
 
 | 증상 | 원인 | 해결 |
