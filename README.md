@@ -175,10 +175,10 @@ py app.py
 
 | # | 확인한 것 | 명령 | 결과 | 통과 |
 |---|---|---|---|---|
-| R1 | 필요한 파일이 모두 저장소에 있는가 | `git clone …` | `island_system.py`, `quests.json`, `web/`, `docs/`, README 2개 | ✅ |
-| R2 | tkinter 버전 실행 | `py island_system.py` | "SYSTEM :: 무인도 생존 교육" 창 열림 | ✅ |
-| R3 | 웹 버전 실행 | `cd web` → `py app.py` | `/api/setup` 응답: 퀘스트 100개, 표류자 5명 / 이미지 200 | ✅ |
-| R4 | 배포본 재생성 | `py build_static.py` | 생성 결과가 저장소와 동일 (`git status` 변경 없음) | ✅ |
+| R1 | 필요한 파일이 모두 저장소에 있는가 | `git clone …` | `island_system.py`, `quests.json`, `web/`, `docs/`, README 2개 | 예 |
+| R2 | tkinter 버전 실행 | `py island_system.py` | "SYSTEM :: 무인도 생존 교육" 창 열림 | 예 |
+| R3 | 웹 버전 실행 | `cd web` → `py app.py` | `/api/setup` 응답: 퀘스트 100개, 표류자 5명 / 이미지 200 | 예 |
+| R4 | 배포본 재생성 | `py build_static.py` | 생성 결과가 저장소와 동일 (`git status` 변경 없음) | 예 |
 
 > 막힌 단계 없음. 단, 웹 버전은 Flask 설치(`py -m pip install flask`)가 먼저 필요하다.
 
