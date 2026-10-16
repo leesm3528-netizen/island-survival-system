@@ -3,9 +3,9 @@
 > 코딩을 처음 배우는 사람이 **하루 동안** 파이썬 미니 프로젝트를 기획 → 제작 → 웹 확장 → 배포까지 한 기록이다.
 > 무엇을 요청했고(프롬프트), 무엇이 만들어졌고, 어떤 문제를 어떻게 풀었는지, 그리고 그 과정에서 배울 개념을 정리했다.
 
-- 🎮 플레이: https://leesm3528-netizen.github.io/island-survival-system/
-- 📦 저장소: https://github.com/leesm3528-netizen/island-survival-system
-- 📄 과제 정리(해석·요소 반영·시험 기록): [README.md](README.md)
+- 플레이: https://leesm3528-netizen.github.io/island-survival-system/
+- 저장소: https://github.com/leesm3528-netizen/island-survival-system
+- 과제 정리(해석·요소 반영·시험 기록): [README.md](README.md)
 
 ---
 
