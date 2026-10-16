@@ -3,6 +3,17 @@
 > 🎮 플레이: https://leesm3528-netizen.github.io/island-survival-system/
 > 📘 학습자용 정리(진행 과정·입력한 프롬프트·개념·디버깅 기록): [STUDY_NOTES.md](STUDY_NOTES.md)
 
+<img src="assets/demo.gif" width="360" alt="시연: 정답 입력 → 레벨업 헬기 보급 → 표류자 구조와 단서 → 버프 획득">
+
+*시연 (tkinter 버전): 정답 입력 → 레벨업 헬기 보급 → 해안가 표류자 → 단서 ③ 확인 → 믿기 → 버프 획득*
+
+## 빠른 실행
+```
+py island_system.py
+```
+> Python 3.10 이상, 추가 설치 없음. `island_system.py`와 `quests.json`이 같은 폴더에 있어야 한다.
+> 웹 버전은 아래 [웹 확장판](#웹-확장판-web-폴더) 참고.
+
 | 항목 | 내용 |
 |---|---|
 | 장르 | 교육 프로그램 |
